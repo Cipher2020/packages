@@ -9,7 +9,7 @@ PKG_VERSION:=2.28.0
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://codeload.github.com/filebrowser/filebrowser/tar.gz/v$(PKG_VERSION)?
+PKG_SOURCE_URL:=https://codeload.github.com/Cipher2020/filebrowser/tar.gz/master?
 PKG_HASH:=5e8c5b57783976f454ee7f23df9c36b9566648b7b443287a7f2089771628695d
 
 PKG_LICENSE:=Apache-2.0
