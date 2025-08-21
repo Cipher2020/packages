@@ -36,6 +36,25 @@ endef
 define Package/zerotier/description
 	ZeroTier creates a global provider-independent virtual private cloud network.
 endef
+## 在首次启动时启用服务
+define Package/zerotier/install
+	$(INSTALL_DIR) $(1)/usr/bin
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/zerotier-one $(1)/usr/bin/
+	$(INSTALL_DIR) $(1)/usr/sbin
+	$(LN) ../bin/zerotier-one $(1)/usr/sbin/zerotier-cli
+	$(INSTALL_DIR) $(1)/etc/config
+	$(INSTALL_CONF) ./files/zerotier.config $(1)/etc/config/zerotier
+	$(INSTALL_DIR) $(1)/etc/init.d
+	$(INSTALL_BIN) ./files/zerotier.init $(1)/etc/init.d/zerotier
+	# 在首次启动时启用服务
+	$(INSTALL_DIR) $(1)/etc/uci-defaults
+	echo "#!/bin/sh" > $(1)/etc/uci-defaults/99-enable-zerotier
+	echo "/etc/init.d/zerotier enable" >> $(1)/etc/uci-defaults/99-enable-zerotier
+	echo "exit 0" >> $(1)/etc/uci-defaults/99-enable-zerotier
+	chmod +x $(1)/etc/uci-defaults/99-enable-zerotier
+endef
+#
+
 
 define Package/zerotier/config
 	source "$(SOURCE)/Config.in"
