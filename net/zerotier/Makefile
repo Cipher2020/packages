@@ -85,6 +85,10 @@ define Package/zerotier/install
 	chmod +x $(1)/etc/uci-defaults/99-enable-zerotier
 endef
 
+ifeq ($(CONFIG_ZEROTIER_ENABLE_SELFTEST),y)
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/zerotier-selftest $(1)/usr/bin/
+endif
+
 	$(CP) ./files/* $(1)/
 endef
 
