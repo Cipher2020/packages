@@ -1,95 +1,50 @@
-#
-# This is free software, licensed under the GNU General Public License v2.
-# See /LICENSE for more information.
-#
-
 include $(TOPDIR)/rules.mk
 
-PKG_NAME:=zerotier
-PKG_VERSION:=1.14.2
+PKG_NAME:=xray-core
+PKG_VERSION:=25.8.3
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://codeload.github.com/zerotier/ZeroTierOne/tar.gz/$(PKG_VERSION)?
-PKG_HASH:=c2f64339fccf5148a7af089b896678d655fbfccac52ddce7714314a59d7bddbb
-PKG_BUILD_DIR:=$(BUILD_DIR)/ZeroTierOne-$(PKG_VERSION)
+PKG_SOURCE_URL:=https://codeload.github.com/XTLS/Xray-core/tar.gz/v$(PKG_VERSION)?
+PKG_HASH:=a7d3785fdd46f1b045b1ef49a2a06e595c327f514b5ee8cd2ae7895813970b2c
 
-PKG_MAINTAINER:=Moritz Warning <moritzwarning@web.de>
-PKG_LICENSE:=BSL 1.1
-PKG_LICENSE_FILES:=LICENSE.txt
+PKG_MAINTAINER:=Tianling Shen <cnsztl@immortalwrt.org>
+PKG_LICENSE:=MPL-2.0
+PKG_LICENSE_FILES:=LICENSE
 
-PKG_ASLR_PIE:=0
+PKG_BUILD_DIR:=$(BUILD_DIR)/Xray-core-$(PKG_VERSION)
+PKG_BUILD_DEPENDS:=golang/host
 PKG_BUILD_PARALLEL:=1
-PKG_BUILD_FLAGS:=gc-sections
+PKG_USE_MIPS16:=0
+PKG_BUILD_FLAGS:=no-mips16
+
+GO_PKG:=github.com/xtls/xray-core
+GO_PKG_LDFLAGS:=-s -w
+GO_PKG_BUILD_PKG:=$(GO_PKG)/main
+GO_PKG_LDFLAGS_X:= \
+	$(GO_PKG)/core.build=OpenWrt \
+	$(GO_PKG)/core.version=$(PKG_VERSION)
 
 include $(INCLUDE_DIR)/package.mk
+include $(TOPDIR)/feeds/packages/lang/golang/golang-package.mk
 
-define Package/zerotier
+define Package/xray-core
+  TITLE:=A platform for building proxies to bypass network restrictions
   SECTION:=net
   CATEGORY:=Network
-  DEPENDS:=+libpthread +libstdcpp +kmod-tun +ip +libminiupnpc +libnatpmp +libatomic
-  TITLE:=Create flat virtual Ethernet networks of almost unlimited size
-  URL:=https://www.zerotier.com
-  SUBMENU:=VPN
+  URL:=https://xtls.github.io
+  DEPENDS:=$(GO_ARCH_DEPENDS) +ca-bundle
 endef
 
-define Package/zerotier/description
-	ZeroTier creates a global provider-independent virtual private cloud network.
+define Package/xray-core/description
+  Xray, Penetrates Everything. It helps you to build your own computer network.
+  It secures your network connections and thus protects your privacy.
 endef
 
-
-
-define Package/zerotier/config
-	source "$(SOURCE)/Config.in"
+define Package/xray-core/install
+	$(call GoPackage/Package/Install/Bin,$(PKG_INSTALL_DIR))
+	$(INSTALL_DIR) $(1)/usr/bin/
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/main $(1)/usr/bin/xray
 endef
 
-ifeq ($(CONFIG_ZEROTIER_ENABLE_DEBUG),y)
-MAKE_FLAGS += ZT_DEBUG=1
-endif
-
-MAKE_FLAGS += \
-	ZT_EMBEDDED=1 \
-	ZT_SSO_SUPPORTED=0 \
-	DEFS="" \
-	OSTYPE="Linux" \
-
-define Build/Compile
-	$(call Build/Compile/Default,one)
-ifeq ($(CONFIG_ZEROTIER_ENABLE_SELFTEST),y)
-	$(call Build/Compile/Default,selftest)
-endif
-endef
-
-# Make binary smaller
-TARGET_CFLAGS += -Wl,-z,noexecstack
-TARGET_LDFLAGS += -Wl,--as-needed -Wl,-z,noexecstack
-
-define Package/zerotier/conffiles
-/etc/config/zerotier
-endef
-
-define Package/zerotier/install
-	$(INSTALL_DIR) $(1)/usr/bin
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/zerotier-one $(1)/usr/bin/
-	$(INSTALL_DIR) $(1)/usr/sbin
-	$(LN) ../bin/zerotier-one $(1)/usr/sbin/zerotier-cli
-	$(INSTALL_DIR) $(1)/etc/config
-	$(INSTALL_CONF) ./files/zerotier.config $(1)/etc/config/zerotier
-	$(INSTALL_DIR) $(1)/etc/init.d
-	$(INSTALL_BIN) ./files/zerotier.init $(1)/etc/init.d/zerotier
-	# 在首次启动时启用服务
-	$(INSTALL_DIR) $(1)/etc/uci-defaults
-	echo "#!/bin/sh" > $(1)/etc/uci-defaults/99-enable-zerotier
-	echo "/etc/init.d/zerotier enable" >> $(1)/etc/uci-defaults/99-enable-zerotier
-	echo "exit 0" >> $(1)/etc/uci-defaults/99-enable-zerotier
-	chmod +x $(1)/etc/uci-defaults/99-enable-zerotier
-endef
-
-ifeq ($(CONFIG_ZEROTIER_ENABLE_SELFTEST),y)
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/zerotier-selftest $(1)/usr/bin/
-endif
-
-	$(CP) ./files/* $(1)/
-endef
-
-$(eval $(call BuildPackage,zerotier))
+$(eval $(call BuildPackage,xray-core))
